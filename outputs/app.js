@@ -1,4 +1,8 @@
 const storageKey = "atelier-products-v1";
+const cartKey = "atelier-cart-v1";
+const adminSessionKey = "atelier-admin-session";
+const checkoutEndpointKey = "atelier-checkout-endpoint";
+const adminPassword = "atelier2026";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 const els = {
@@ -19,6 +23,24 @@ const els = {
   resetDemo: document.querySelector("#resetDemo"),
   newProduct: document.querySelector("#newProduct"),
   imageSequence: document.querySelector("#imageSequence"),
+  admin: document.querySelector("#admin"),
+  adminEntry: document.querySelector("#adminEntry"),
+  loginModal: document.querySelector("#loginModal"),
+  loginForm: document.querySelector("#loginForm"),
+  closeLogin: document.querySelector("#closeLogin"),
+  adminPassword: document.querySelector("#adminPassword"),
+  loginError: document.querySelector("#loginError"),
+  logoutAdmin: document.querySelector("#logoutAdmin"),
+  cartTrigger: document.querySelector("#cartTrigger"),
+  cartCount: document.querySelector("#cartCount"),
+  cartDrawer: document.querySelector("#cartDrawer"),
+  closeCart: document.querySelector("#closeCart"),
+  cartItems: document.querySelector("#cartItems"),
+  cartTotal: document.querySelector("#cartTotal"),
+  checkoutButton: document.querySelector("#checkoutButton"),
+  checkoutNote: document.querySelector("#checkoutNote"),
+  checkoutEndpointInput: document.querySelector("#checkoutEndpointInput"),
+  saveCheckoutEndpoint: document.querySelector("#saveCheckoutEndpoint"),
 };
 
 const fields = {
@@ -39,6 +61,7 @@ const fields = {
 };
 
 let products = loadProducts();
+let cart = loadCart();
 
 function artSvg(title, bg, accent, second) {
   const svg = `
@@ -128,6 +151,15 @@ function loadProducts() {
 
 function saveProducts() {
   localStorage.setItem(storageKey, JSON.stringify(products));
+}
+
+function loadCart() {
+  const saved = localStorage.getItem(cartKey);
+  return saved ? JSON.parse(saved) : [];
+}
+
+function saveCart() {
+  localStorage.setItem(cartKey, JSON.stringify(cart));
 }
 
 function unique(key) {
@@ -272,6 +304,105 @@ function renderImageSequence(images = []) {
   }).join("");
 }
 
+function isAdminLoggedIn() {
+  return localStorage.getItem(adminSessionKey) === "active";
+}
+
+function setAdminVisible(visible) {
+  els.admin.hidden = !visible;
+  if (visible) {
+    els.admin.classList.remove("admin-locked");
+    els.checkoutEndpointInput.value = localStorage.getItem(checkoutEndpointKey) || "";
+  } else {
+    els.admin.classList.add("admin-locked");
+  }
+}
+
+function openAdminLogin() {
+  els.loginError.textContent = "";
+  els.adminPassword.value = "";
+  els.loginModal.showModal();
+  els.adminPassword.focus();
+}
+
+function cartProducts() {
+  return cart.map((id) => products.find((product) => product.id === id)).filter(Boolean);
+}
+
+function addToCart(id) {
+  const product = products.find((item) => item.id === id);
+  if (!product || Number(product.stock) === 0) return;
+  if (!cart.includes(id)) cart.push(id);
+  saveCart();
+  renderCart();
+  els.cartDrawer.showModal();
+}
+
+function removeFromCart(id) {
+  cart = cart.filter((itemId) => itemId !== id);
+  saveCart();
+  renderCart();
+}
+
+function renderCart() {
+  const items = cartProducts();
+  els.cartCount.textContent = items.length;
+  els.cartItems.innerHTML = items.length ? items.map((product) => `
+    <div class="cart-item">
+      <img src="${product.images[0]}" alt="${product.title}">
+      <div>
+        <strong>${product.title}</strong>
+        <p class="meta">${product.height} x ${product.width} cm · ${product.material}</p>
+        <p>${money.format(product.price)}</p>
+      </div>
+      <button type="button" data-remove-cart="${product.id}">Remover</button>
+    </div>
+  `).join("") : `<p class="meta">Seu carrinho está vazio.</p>`;
+  const total = items.reduce((sum, product) => sum + Number(product.price), 0);
+  els.cartTotal.textContent = money.format(total);
+  els.checkoutButton.disabled = items.length === 0;
+  els.checkoutNote.textContent = "";
+  els.cartItems.querySelectorAll("[data-remove-cart]").forEach((button) => {
+    button.addEventListener("click", () => removeFromCart(button.dataset.removeCart));
+  });
+}
+
+async function startCheckout() {
+  const items = cartProducts();
+  if (!items.length) return;
+  const endpoint = localStorage.getItem(checkoutEndpointKey);
+  if (!endpoint) {
+    els.checkoutNote.textContent = "Checkout Mercado Pago preparado. Falta configurar um endpoint seguro no painel reservado para criar a preferência de pagamento.";
+    return;
+  }
+
+  els.checkoutButton.disabled = true;
+  els.checkoutNote.textContent = "Criando pagamento seguro...";
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((product) => ({
+          id: product.id,
+          title: product.title,
+          quantity: 1,
+          unit_price: Number(product.price),
+          currency_id: "BRL",
+        })),
+      }),
+    });
+    const data = await response.json();
+    const checkoutUrl = data.init_point || data.sandbox_init_point || data.url;
+    if (!response.ok || !checkoutUrl) throw new Error("Resposta de checkout inválida.");
+    window.location.href = checkoutUrl;
+  } catch (error) {
+    els.checkoutNote.textContent = "Não foi possível iniciar o pagamento. Confira o endpoint Mercado Pago no painel reservado.";
+  } finally {
+    els.checkoutButton.disabled = false;
+  }
+}
+
 function renderAll() {
   renderFilters();
   renderGallery();
@@ -352,7 +483,10 @@ function openProduct(id) {
   const similar = (product.similarIds || []).map((sid) => products.find((item) => item.id === sid)).filter(Boolean);
   els.modalBody.innerHTML = `
     <div class="photo-viewer">
-      <img id="mainModalImage" src="${product.images[0]}" alt="${product.title}">
+      <div class="main-photo-wrap">
+        <img id="mainModalImage" src="${product.images[0]}" alt="${product.title}">
+        ${Number(product.stock) > 0 ? `<button class="buy-float" id="buyFromPhoto" type="button" hidden>Comprar</button>` : ""}
+      </div>
       <div class="thumbs">
         ${product.images.slice(0, 3).map((image, index) => `<button type="button" data-image="${index}"><img src="${image}" alt="Foto ${index + 1} de ${product.title}"></button>`).join("")}
       </div>
@@ -362,6 +496,7 @@ function openProduct(id) {
       <h2>${product.title}</h2>
       <p class="meta">${product.material} · ${product.paint} · cor ${product.color}</p>
       ${price}
+      ${Number(product.stock) > 0 ? `<button class="primary-button detail-buy" type="button" data-add-cart="${product.id}">Adicionar ao carrinho</button>` : ""}
       <p><strong>Dimensões:</strong> ${product.height} cm altura, ${product.width} cm largura, ${product.depth} cm espessura.</p>
       <p>${product.description}</p>
       <h3>Quadros similares</h3>
@@ -378,7 +513,20 @@ function openProduct(id) {
   els.modalBody.querySelectorAll("[data-image]").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelector("#mainModalImage").src = product.images[Number(button.dataset.image)];
+      const buyButton = document.querySelector("#buyFromPhoto");
+      if (buyButton) buyButton.hidden = Number(button.dataset.image) !== 0;
     });
+  });
+  const mainImage = document.querySelector("#mainModalImage");
+  const buyButton = document.querySelector("#buyFromPhoto");
+  if (mainImage && buyButton) {
+    mainImage.addEventListener("click", () => {
+      buyButton.hidden = false;
+    });
+    buyButton.addEventListener("click", () => addToCart(product.id));
+  }
+  els.modalBody.querySelectorAll("[data-add-cart]").forEach((button) => {
+    button.addEventListener("click", () => addToCart(button.dataset.addCart));
   });
   els.modalBody.querySelectorAll("[data-open-similar]").forEach((button) => {
     button.addEventListener("click", () => openProduct(button.dataset.openSimilar));
@@ -399,6 +547,34 @@ els.clearFilters.addEventListener("click", () => {
 els.form.addEventListener("submit", saveForm);
 els.newProduct.addEventListener("click", clearForm);
 els.closeModal.addEventListener("click", () => els.modal.close());
+els.adminEntry.addEventListener("click", openAdminLogin);
+els.closeLogin.addEventListener("click", () => els.loginModal.close());
+els.loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (els.adminPassword.value === adminPassword) {
+    localStorage.setItem(adminSessionKey, "active");
+    setAdminVisible(true);
+    els.loginModal.close();
+    location.hash = "#admin";
+  } else {
+    els.loginError.textContent = "Senha incorreta.";
+  }
+});
+els.logoutAdmin.addEventListener("click", () => {
+  localStorage.removeItem(adminSessionKey);
+  setAdminVisible(false);
+  location.hash = "#galeria";
+});
+els.cartTrigger.addEventListener("click", () => {
+  renderCart();
+  els.cartDrawer.showModal();
+});
+els.closeCart.addEventListener("click", () => els.cartDrawer.close());
+els.checkoutButton.addEventListener("click", startCheckout);
+els.saveCheckoutEndpoint.addEventListener("click", () => {
+  localStorage.setItem(checkoutEndpointKey, els.checkoutEndpointInput.value.trim());
+  els.checkoutEndpointInput.value = localStorage.getItem(checkoutEndpointKey) || "";
+});
 fields.images.addEventListener("change", async () => {
   const selectedImages = [...fields.images.files].slice(0, 3);
   const uploaded = await Promise.all(selectedImages.map(fileToDataUrl));
@@ -417,3 +593,5 @@ els.resetDemo.addEventListener("click", () => {
 
 renderAll();
 renderImageSequence();
+renderCart();
+setAdminVisible(isAdminLoggedIn());

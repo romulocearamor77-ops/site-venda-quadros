@@ -14,7 +14,7 @@
       </div>
       <nav class="nav">
         <a href="#galeria">Galeria</a>
-        <a href="#admin">Admin</a>
+        <button class="cart-trigger" id="cartTrigger" type="button">Carrinho <span id="cartCount">0</span></button>
       </nav>
     </header>
 
@@ -88,13 +88,16 @@
         </section>
       </section>
 
-      <section class="admin" id="admin">
+      <section class="admin admin-locked" id="admin" hidden>
         <div class="section-title">
           <div>
             <p class="eyebrow">Painel administrativo</p>
             <h2>Cadastro, preço, imagens, estoque e similares</h2>
           </div>
-          <button id="resetDemo" type="button">Restaurar demonstração</button>
+          <div class="admin-actions">
+            <button id="resetDemo" type="button">Restaurar demonstração</button>
+            <button id="logoutAdmin" type="button">Sair</button>
+          </div>
         </div>
 
         <div class="admin-layout">
@@ -179,11 +182,53 @@
 
           <div class="inventory">
             <h3>Estoque</h3>
+            <div class="checkout-settings">
+              <label>
+                Endpoint seguro Mercado Pago
+                <input id="checkoutEndpointInput" placeholder="https://seu-backend.com/api/checkout" />
+              </label>
+              <button id="saveCheckoutEndpoint" type="button">Salvar endpoint</button>
+            </div>
             <div id="inventoryList"></div>
           </div>
         </div>
       </section>
     </main>
+
+    <button class="quiet-admin-entry" id="adminEntry" type="button" aria-label="Acesso reservado"></button>
+
+    <dialog id="loginModal" class="login-modal">
+      <form id="loginForm" class="login-card">
+        <button class="close" id="closeLogin" aria-label="Fechar" type="button">x</button>
+        <p class="eyebrow">Acesso reservado</p>
+        <h2>Login</h2>
+        <label>
+          Senha
+          <input id="adminPassword" type="password" autocomplete="current-password" required />
+        </label>
+        <p class="login-error" id="loginError"></p>
+        <button class="primary-button" type="submit">Entrar</button>
+      </form>
+    </dialog>
+
+    <dialog id="cartDrawer" class="cart-drawer">
+      <div class="cart-panel">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Compra</p>
+            <h2>Carrinho</h2>
+          </div>
+          <button class="close" id="closeCart" aria-label="Fechar" type="button">x</button>
+        </div>
+        <div id="cartItems"></div>
+        <div class="cart-total">
+          <span>Total</span>
+          <strong id="cartTotal">R$ 0,00</strong>
+        </div>
+        <p class="checkout-note" id="checkoutNote"></p>
+        <button class="primary-button checkout-button" id="checkoutButton" type="button">Finalizar compra</button>
+      </div>
+    </dialog>
 
     <dialog id="productModal" class="modal">
       <button class="close" id="closeModal" aria-label="Fechar" type="button">x</button>
