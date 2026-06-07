@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atelier Autoral | Galeria de Quadros</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Atelier autoral</p>
+        <h1>Galeria de obras disponíveis</h1>
+      </div>
+      <nav class="nav">
+        <a href="#galeria">Galeria</a>
+        <a href="#admin">Admin</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-label="Destaque da galeria">
+        <div class="hero-copy">
+          <p class="eyebrow">Pinturas originais, prints e peças em MDF</p>
+          <h2>Veja cada quadro com clareza antes de escolher.</h2>
+          <p>Filtros por coleção, material, cor, tamanho e preço ajudam o visitante a encontrar a obra certa.</p>
+          <a class="primary-link" href="#galeria">Explorar obras</a>
+        </div>
+      </section>
+
+      <section class="gallery-shell" id="galeria">
+        <aside class="filters" aria-label="Filtros da galeria">
+          <div class="filter-head">
+            <h2>Filtros</h2>
+            <button id="clearFilters" type="button">Limpar</button>
+          </div>
+
+          <label>
+            Coleção
+            <select id="collectionFilter"></select>
+          </label>
+
+          <label>
+            Material
+            <select id="materialFilter"></select>
+          </label>
+
+          <label>
+            Tipo de pintura
+            <select id="paintFilter"></select>
+          </label>
+
+          <label>
+            Cor predominante
+            <select id="colorFilter"></select>
+          </label>
+
+          <label>
+            Tamanho
+            <select id="sizeFilter">
+              <option value="">Todos</option>
+              <option value="pequeno">Pequeno</option>
+              <option value="medio">Médio</option>
+              <option value="grande">Grande</option>
+            </select>
+          </label>
+
+          <label>
+            Ordem
+            <select id="sortFilter">
+              <option value="featured">Destaques</option>
+              <option value="priceAsc">Menor preço</option>
+              <option value="priceDesc">Maior preço</option>
+              <option value="stock">Em estoque primeiro</option>
+            </select>
+          </label>
+        </aside>
+
+        <section class="gallery-content">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Seleção atual</p>
+              <h2 id="resultTitle">Obras cadastradas</h2>
+            </div>
+            <span id="resultCount"></span>
+          </div>
+          <div class="art-grid" id="artGrid"></div>
+        </section>
+      </section>
+
+      <section class="admin" id="admin">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Painel administrativo</p>
+            <h2>Cadastro, preço, imagens, estoque e similares</h2>
+          </div>
+          <button id="resetDemo" type="button">Restaurar demonstração</button>
+        </div>
+
+        <div class="admin-layout">
+          <form id="productForm" class="admin-form">
+            <input type="hidden" id="productId" />
+
+            <label>
+              Nome da obra
+              <input id="titleInput" required placeholder="Ex.: Jardim interno" />
+            </label>
+
+            <div class="split">
+              <label>
+                Coleção
+                <input id="collectionInput" list="collectionList" required />
+                <datalist id="collectionList"></datalist>
+              </label>
+              <label>
+                Cor predominante
+                <input id="colorInput" required placeholder="Ex.: azul" />
+              </label>
+            </div>
+
+            <div class="split">
+              <label>
+                Material
+                <input id="materialInput" list="materialList" required />
+                <datalist id="materialList"></datalist>
+              </label>
+              <label>
+                Tipo de pintura
+                <input id="paintInput" list="paintList" required />
+                <datalist id="paintList"></datalist>
+              </label>
+            </div>
+
+            <div class="quad">
+              <label>
+                Altura (cm)
+                <input id="heightInput" type="number" min="1" required />
+              </label>
+              <label>
+                Largura (cm)
+                <input id="widthInput" type="number" min="1" required />
+              </label>
+              <label>
+                Espessura (cm)
+                <input id="depthInput" type="number" min="0" step="0.1" required />
+              </label>
+              <label>
+                Quantidade
+                <input id="stockInput" type="number" min="0" required />
+              </label>
+            </div>
+
+            <label>
+              Preço
+              <input id="priceInput" type="number" min="0" step="0.01" required />
+            </label>
+
+            <label>
+              Descrição do quadro
+              <textarea id="descriptionInput" rows="6" required></textarea>
+            </label>
+
+            <label>
+              Até 3 fotos demonstrativas
+              <input id="imageInput" type="file" accept="image/*" multiple />
+            </label>
+
+            <label>
+              Quadros similares indicados
+              <select id="similarInput" multiple size="5"></select>
+            </label>
+
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Salvar obra</button>
+              <button id="newProduct" type="button">Novo cadastro</button>
+            </div>
+          </form>
+
+          <div class="inventory">
+            <h3>Estoque</h3>
+            <div id="inventoryList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="productModal" class="modal">
+      <button class="close" id="closeModal" aria-label="Fechar" type="button">x</button>
+      <div class="modal-body" id="modalBody"></div>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
