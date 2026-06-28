@@ -329,7 +329,7 @@ body.locked {
   border: 1px solid var(--line);
   border-radius: 8px;
   background-color: #f2eee8;
-  background-image: var(--admin-hero-image, url("../assets/home-isadora-edited.jpeg"));
+  background-image: var(--admin-hero-image, url("../assets/home-isadora-clean.jpeg"));
   background-position: var(--admin-hero-pos-x, 50%) var(--admin-hero-pos-y, 0%);
   background-size: var(--admin-hero-size, cover);
   background-repeat: no-repeat;

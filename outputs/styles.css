@@ -1378,7 +1378,7 @@ textarea {
   }
 }
 
-/* Exact supplied home image */
+/* Editable home image */
 .topbar {
   position: absolute;
   top: 0;
@@ -1426,7 +1426,7 @@ textarea {
   padding: 0;
   display: block;
   background-color: #f2eee8;
-  background-image: var(--hero-image, url("./assets/home-isadora-edited.jpeg"));
+  background-image: var(--hero-image, url("./assets/home-isadora-clean.jpeg"));
   background-position: var(--hero-pos-x, 50%) var(--hero-pos-y, 0%);
   background-size: var(--hero-size, cover);
   background-repeat: no-repeat;
