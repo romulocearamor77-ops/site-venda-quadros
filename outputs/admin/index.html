@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Admin | Atelier Autoral</title>
-    <link rel="stylesheet" href="./styles.css?v=3" />
+    <link rel="stylesheet" href="./styles.css?v=4" />
   </head>
   <body>
     <main>
@@ -34,7 +34,7 @@
           <nav>
             <button class="tab active" type="button" data-view="products">Obras e estoque</button>
             <button class="tab" type="button" data-view="users">Usuários</button>
-            <button class="tab" type="button" data-view="settings">Pagamentos</button>
+            <button class="tab" type="button" data-view="settings">Configurações</button>
           </nav>
           <div class="session">
             <span id="sessionUser"></span>
@@ -169,6 +169,34 @@
           </section>
 
           <section class="view" id="settingsView">
+            <div class="panel settings hero-settings">
+              <h3>Imagem inicial</h3>
+              <p>Envie a imagem da página inicial e ajuste posição e escala até encaixar como capa.</p>
+              <label>
+                Imagem da capa
+                <input id="heroImageInput" type="file" accept="image/*" />
+              </label>
+              <div class="hero-preview" id="heroPreview"></div>
+              <div class="split">
+                <label>
+                  Posição horizontal
+                  <input id="heroXInput" type="range" min="0" max="100" value="50" />
+                </label>
+                <label>
+                  Posição vertical
+                  <input id="heroYInput" type="range" min="0" max="100" value="0" />
+                </label>
+              </div>
+              <label>
+                Escala da imagem
+                <input id="heroScaleInput" type="range" min="100" max="320" value="100" />
+              </label>
+              <div class="actions">
+                <button class="primary" id="saveHeroSettings" type="button">Salvar imagem inicial</button>
+                <button id="resetHeroSettings" type="button">Restaurar padrão</button>
+              </div>
+            </div>
+
             <div class="panel settings">
               <h3>Mercado Pago</h3>
               <p>Informe o endpoint seguro do seu backend. Ele deve criar a preferência de pagamento no Mercado Pago e retornar `init_point`.</p>
@@ -183,6 +211,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=3"></script>
+    <script src="./app.js?v=4"></script>
   </body>
 </html>

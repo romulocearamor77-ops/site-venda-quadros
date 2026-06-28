@@ -2,6 +2,7 @@ const storageKey = "atelier-products-v1";
 const cartKey = "atelier-cart-v1";
 const adminSessionKey = "atelier-admin-session";
 const checkoutEndpointKey = "atelier-checkout-endpoint";
+const heroSettingsKey = "atelier-hero-settings-v1";
 const adminPassword = "atelier2026";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -62,6 +63,27 @@ const fields = {
 
 let products = loadProducts();
 let cart = loadCart();
+
+function loadHeroSettings() {
+  const saved = localStorage.getItem(heroSettingsKey);
+  return saved ? JSON.parse(saved) : null;
+}
+
+function applyHeroSettings() {
+  const settings = loadHeroSettings();
+  const root = document.documentElement;
+  if (!settings) {
+    root.style.removeProperty("--hero-image");
+    root.style.removeProperty("--hero-pos-x");
+    root.style.removeProperty("--hero-pos-y");
+    root.style.removeProperty("--hero-size");
+    return;
+  }
+  if (settings.image) root.style.setProperty("--hero-image", `url("${settings.image}")`);
+  root.style.setProperty("--hero-pos-x", `${settings.x ?? 50}%`);
+  root.style.setProperty("--hero-pos-y", `${settings.y ?? 0}%`);
+  root.style.setProperty("--hero-size", `${settings.scale ?? 100}% auto`);
+}
 
 function artSvg(title, bg, accent, second) {
   const svg = `
@@ -601,3 +623,7 @@ renderAll();
 renderImageSequence();
 renderCart();
 setAdminVisible(isAdminLoggedIn());
+applyHeroSettings();
+window.addEventListener("storage", (event) => {
+  if (event.key === heroSettingsKey) applyHeroSettings();
+});

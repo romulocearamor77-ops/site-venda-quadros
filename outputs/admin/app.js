@@ -2,6 +2,7 @@ const productKey = "atelier-products-v1";
 const usersKey = "atelier-admin-users-v1";
 const sessionKey = "atelier-admin-site-session";
 const checkoutEndpointKey = "atelier-checkout-endpoint";
+const heroSettingsKey = "atelier-hero-settings-v1";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -27,6 +28,13 @@ const els = {
   userCount: document.querySelector("#userCount"),
   checkoutEndpointInput: document.querySelector("#checkoutEndpointInput"),
   saveCheckoutEndpoint: document.querySelector("#saveCheckoutEndpoint"),
+  heroImageInput: document.querySelector("#heroImageInput"),
+  heroPreview: document.querySelector("#heroPreview"),
+  heroXInput: document.querySelector("#heroXInput"),
+  heroYInput: document.querySelector("#heroYInput"),
+  heroScaleInput: document.querySelector("#heroScaleInput"),
+  saveHeroSettings: document.querySelector("#saveHeroSettings"),
+  resetHeroSettings: document.querySelector("#resetHeroSettings"),
 };
 
 const productFields = {
@@ -55,6 +63,7 @@ const userFields = {
 
 let products = loadProducts();
 let users = loadUsers();
+let pendingHeroImage = "";
 
 function loadProducts() {
   const saved = localStorage.getItem(productKey);
@@ -83,6 +92,27 @@ function saveUsers() {
   localStorage.setItem(usersKey, JSON.stringify(users));
 }
 
+function loadHeroSettings() {
+  const saved = localStorage.getItem(heroSettingsKey);
+  return saved ? JSON.parse(saved) : { image: "", x: 50, y: 0, scale: 100 };
+}
+
+function saveHeroSettings(settings) {
+  localStorage.setItem(heroSettingsKey, JSON.stringify(settings));
+}
+
+function applyHeroPreview(settings = loadHeroSettings()) {
+  const image = pendingHeroImage || settings.image;
+  if (image) document.documentElement.style.setProperty("--admin-hero-image", `url("${image}")`);
+  else document.documentElement.style.removeProperty("--admin-hero-image");
+  document.documentElement.style.setProperty("--admin-hero-pos-x", `${settings.x ?? 50}%`);
+  document.documentElement.style.setProperty("--admin-hero-pos-y", `${settings.y ?? 0}%`);
+  document.documentElement.style.setProperty("--admin-hero-size", `${settings.scale ?? 100}% auto`);
+  els.heroXInput.value = settings.x ?? 50;
+  els.heroYInput.value = settings.y ?? 0;
+  els.heroScaleInput.value = settings.scale ?? 100;
+}
+
 function currentUser() {
   const id = localStorage.getItem(sessionKey);
   return users.find((user) => user.id === id);
@@ -102,6 +132,7 @@ function setAuthenticated(user) {
     document.body.classList.remove("locked");
     els.sessionUser.textContent = `${user.name} · ${user.role}`;
     els.checkoutEndpointInput.value = localStorage.getItem(checkoutEndpointKey) || "";
+    applyHeroPreview();
     renderAll();
   } else {
     localStorage.removeItem(sessionKey);
@@ -201,6 +232,29 @@ function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function heroFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxWidth = 1800;
+        const ratio = Math.min(1, maxWidth / image.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * ratio);
+        canvas.height = Math.round(image.height * ratio);
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.9));
+      };
+      image.onerror = reject;
+      image.src = reader.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -310,7 +364,7 @@ function switchView(view) {
   if (!requireAuth()) return;
   els.tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view));
   els.views.forEach((panel) => panel.classList.toggle("active", panel.id === `${view}View`));
-  els.viewTitle.textContent = view === "products" ? "Obras e estoque" : view === "users" ? "Usuários" : "Pagamentos";
+  els.viewTitle.textContent = view === "products" ? "Obras e estoque" : view === "users" ? "Usuários" : "Configurações";
 }
 
 function renderAll() {
@@ -344,6 +398,41 @@ els.userForm.addEventListener("submit", saveUser);
 document.querySelector("#newUser").addEventListener("click", clearUserForm);
 els.saveCheckoutEndpoint.addEventListener("click", () => {
   localStorage.setItem(checkoutEndpointKey, els.checkoutEndpointInput.value.trim());
+});
+els.heroImageInput.addEventListener("change", async () => {
+  const file = els.heroImageInput.files[0];
+  if (!file) return;
+  pendingHeroImage = await heroFileToDataUrl(file);
+  applyHeroPreview(loadHeroSettings());
+});
+[els.heroXInput, els.heroYInput, els.heroScaleInput].forEach((input) => {
+  input.addEventListener("input", () => {
+    applyHeroPreview({
+      ...loadHeroSettings(),
+      x: Number(els.heroXInput.value),
+      y: Number(els.heroYInput.value),
+      scale: Number(els.heroScaleInput.value),
+    });
+  });
+});
+els.saveHeroSettings.addEventListener("click", () => {
+  const existing = loadHeroSettings();
+  const settings = {
+    image: pendingHeroImage || existing.image,
+    x: Number(els.heroXInput.value),
+    y: Number(els.heroYInput.value),
+    scale: Number(els.heroScaleInput.value),
+  };
+  saveHeroSettings(settings);
+  pendingHeroImage = "";
+  els.heroImageInput.value = "";
+  applyHeroPreview(settings);
+});
+els.resetHeroSettings.addEventListener("click", () => {
+  localStorage.removeItem(heroSettingsKey);
+  pendingHeroImage = "";
+  els.heroImageInput.value = "";
+  applyHeroPreview(loadHeroSettings());
 });
 
 setAuthenticated(currentUser());

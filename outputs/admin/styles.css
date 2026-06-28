@@ -314,11 +314,25 @@ body.locked {
 
 .settings {
   max-width: 760px;
+  margin-bottom: 22px;
 }
 
 .settings p {
   color: var(--muted);
   line-height: 1.6;
+}
+
+.hero-preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #f2eee8;
+  background-image: var(--admin-hero-image, url("../assets/home-isadora-edited.jpeg"));
+  background-position: var(--admin-hero-pos-x, 50%) var(--admin-hero-pos-y, 0%);
+  background-size: var(--admin-hero-size, cover);
+  background-repeat: no-repeat;
 }
 
 @media (max-width: 980px) {
